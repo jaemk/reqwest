@@ -30,6 +30,7 @@ impl Error {
             Kind::Http(ref e) => Some(e),
             Kind::UrlEncoded(ref e) => Some(e),
             Kind::Json(ref e) => Some(e),
+            Kind::Io(ref e) => Some(e),
             Kind::TooManyRedirects |
             Kind::RedirectLoop => None,
         }
@@ -75,6 +76,7 @@ impl fmt::Display for Error {
             Kind::Http(ref e) => fmt::Display::fmt(e, f),
             Kind::UrlEncoded(ref e) => fmt::Display::fmt(e, f),
             Kind::Json(ref e) => fmt::Display::fmt(e, f),
+            Kind::Io(ref e) => fmt::Display::fmt(e, f),
             Kind::TooManyRedirects => f.write_str("Too many redirects"),
             Kind::RedirectLoop => f.write_str("Infinite redirect loop"),
         }
@@ -87,6 +89,7 @@ impl StdError for Error {
             Kind::Http(ref e) => e.description(),
             Kind::UrlEncoded(ref e) => e.description(),
             Kind::Json(ref e) => e.description(),
+            Kind::Io(ref e) => e.description(),
             Kind::TooManyRedirects => "Too many redirects",
             Kind::RedirectLoop => "Infinite redirect loop",
         }
@@ -97,6 +100,7 @@ impl StdError for Error {
             Kind::Http(ref e) => Some(e),
             Kind::UrlEncoded(ref e) => Some(e),
             Kind::Json(ref e) => Some(e),
+            Kind::Io(ref e) => Some(e),
             Kind::TooManyRedirects |
             Kind::RedirectLoop => None,
         }
@@ -110,6 +114,7 @@ pub enum Kind {
     Http(::hyper::Error),
     UrlEncoded(::serde_urlencoded::ser::Error),
     Json(::serde_json::Error),
+    Io(::std::io::Error),
     TooManyRedirects,
     RedirectLoop,
 }
@@ -146,6 +151,12 @@ impl From<::serde_json::Error> for Kind {
 impl From<::hyper_native_tls::native_tls::Error> for Kind {
     fn from(other: ::hyper_native_tls::native_tls::Error) -> Kind {
         ::hyper::Error::Ssl(Box::new(other)).into()
+    }
+}
+
+impl From<::std::io::Error> for Kind {
+    fn from(err: ::std::io::Error) -> Kind {
+        Kind::Io(err)
     }
 }
 

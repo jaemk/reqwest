@@ -173,6 +173,27 @@ impl Response {
     pub fn json<T: DeserializeOwned>(&mut self) -> ::Result<T> {
         serde_json::from_reader(self).map_err(::error::from)
     }
+
+    /// Try to read the response body to a string. This is a convenience method
+    /// wrapping `Response::read_to_string` that will consume the `Response`
+    /// in the process of reading from it.
+    ///
+    /// ```rust
+    /// # fn run() -> Result<(), Box<::std::error::Error>> {
+    /// let resp = reqwest::get("http://httpbin.org/get")?;
+    /// let resp_text = resp.text()?;
+    /// # Ok(())
+    /// # }
+    /// ```
+    #[inline]
+    pub fn text(mut self) -> ::Result<String> {
+        let size = self.headers().get::<ContentLength>()
+            .map(|ct_len| **ct_len)
+            .unwrap_or(0);
+        let mut s = String::with_capacity(size as usize);
+        self.read_to_string(&mut s).map_err(::error::from)?;
+        Ok(s)
+    }
 }
 
 enum Decoder {
